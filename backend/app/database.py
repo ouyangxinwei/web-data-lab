@@ -1,3 +1,4 @@
+"""SQLAlchemy engine, session factory, and database dependencies."""
 from collections.abc import Generator
 
 from sqlalchemy import create_engine, event, text
@@ -6,21 +7,32 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.core.config import DATABASE_URL
 
-# SQLite connections are thread-bound by default. FastAPI may use worker threads,
-# so disable that restriction and wait briefly if another request is writing.
 database_url = make_url(DATABASE_URL)
 is_sqlite = database_url.get_backend_name() == "sqlite"
 
 connect_args = (
     {"check_same_thread": False, "timeout": 30}
     if is_sqlite
-    else {}
+    else {"connect_timeout": 10}
 )
+
+engine_options = {
+    "pool_pre_ping": True,
+    # Keep the application pool bounded; the Neon pooled endpoint handles
+    # multiplexing between application connections and database backends.
+}
+if not is_sqlite:
+    engine_options.update(
+        pool_size=5,
+        max_overflow=5,
+        pool_timeout=30,
+        pool_recycle=300,
+    )
 
 engine = create_engine(
     DATABASE_URL,
     connect_args=connect_args,
-    pool_pre_ping=True,
+    **engine_options,
 )
 
 if is_sqlite:
@@ -29,9 +41,7 @@ if is_sqlite:
         """Apply SQLite settings to every newly opened DBAPI connection."""
         cursor = dbapi_connection.cursor()
         try:
-            # Enforce declared foreign-key constraints in SQLite.
             cursor.execute("PRAGMA foreign_keys=ON")
-            # Wait up to 30 seconds for a competing writer before raising.
             cursor.execute("PRAGMA busy_timeout=30000")
         finally:
             cursor.close()
