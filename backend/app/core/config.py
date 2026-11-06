@@ -3,8 +3,11 @@ import os
 from pathlib import Path
 
 from sqlalchemy.engine import make_url
+from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# Load the repository-root .env for local development; cloud hosts use injected secrets.
+load_dotenv(PROJECT_ROOT.parent / ".env")
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
 ENVIRONMENT = os.getenv("WDL_ENV", "development").strip().lower()
 
