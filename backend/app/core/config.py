@@ -18,14 +18,18 @@ DATABASE_URL = _configured_database_url or (
     f"sqlite:///{(Path(os.getenv('WDL_DATA_DIR', str(DEFAULT_DATA_DIR))).expanduser() / 'web_data_lab.db').as_posix()}"
 )
 
-# Alembic should use Neon's direct endpoint, not the pooled application endpoint.
-MIGRATION_DATABASE_URL = os.getenv("WDL_MIGRATION_DATABASE_URL")
-if not MIGRATION_DATABASE_URL:
+
+def get_migration_database_url() -> str:
+    """Return the direct URL required by Alembic, without affecting API startup."""
+    migration_url = os.getenv("WDL_MIGRATION_DATABASE_URL")
+    if migration_url:
+        return migration_url
+
     if make_url(DATABASE_URL).get_backend_name() == "postgresql":
         raise RuntimeError(
-            "WDL_MIGRATION_DATABASE_URL must be configured for PostgreSQL migrations."
+            "Set WDL_MIGRATION_DATABASE_URL to Neon's direct connection URL before running Alembic."
         )
-    MIGRATION_DATABASE_URL = DATABASE_URL
+    return DATABASE_URL
 
 
 def _ensure_sqlite_directory() -> None:
