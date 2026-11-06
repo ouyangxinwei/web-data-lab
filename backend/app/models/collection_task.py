@@ -14,7 +14,7 @@ class CollectionTask(Base):
         CheckConstraint("schedule_type IN ('manual', 'interval', 'cron')", name="ck_collection_tasks_schedule_type"),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     source_id: Mapped[int] = mapped_column(ForeignKey("data_sources.id", ondelete="RESTRICT"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     schedule_type: Mapped[str] = mapped_column(String(20), nullable=False, default="manual", server_default="manual")

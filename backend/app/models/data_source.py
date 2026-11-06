@@ -14,7 +14,7 @@ class DataSource(Base):
         CheckConstraint("source_type IN ('api', 'html')", name="ck_data_sources_source_type"),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False, index=True)
     source_type: Mapped[str] = mapped_column(String(20), nullable=False)
     base_url: Mapped[str] = mapped_column(Text, nullable=False)

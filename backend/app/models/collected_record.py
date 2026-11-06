@@ -15,7 +15,7 @@ class CollectedRecord(Base):
         Index("ix_collected_records_run_collected", "run_id", "collected_at"),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     source_id: Mapped[int] = mapped_column(ForeignKey("data_sources.id", ondelete="RESTRICT"), nullable=False, index=True)
     run_id: Mapped[int] = mapped_column(ForeignKey("collection_runs.id", ondelete="RESTRICT"), nullable=False, index=True)
     external_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)

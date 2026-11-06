@@ -13,7 +13,7 @@ class CollectionRun(Base):
         CheckConstraint("status IN ('pending', 'running', 'success', 'failed')", name="ck_collection_runs_status"),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     task_id: Mapped[int] = mapped_column(ForeignKey("collection_tasks.id", ondelete="RESTRICT"), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending", server_default="pending", index=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
