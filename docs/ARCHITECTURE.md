@@ -32,9 +32,11 @@ A replacement computer can continue using the same data because the data is held
 ### Production
 
 - Use Neon PostgreSQL.
-- Set `WDL_DATABASE_URL` in the cloud backend's secret/environment configuration.
-- Use a Neon connection string with TLS enabled (Neon's supplied connection string includes the required SSL settings).
-- Use Neon's pooled connection string for normal serverless or horizontally scaled application traffic when appropriate; use the direct connection string for migrations or administrative operations where a stable direct connection is preferred.
+- Set `WDL_DATABASE_URL` to Neon's pooled connection string in the API runtime environment.
+- Set `WDL_MIGRATION_DATABASE_URL` to Neon's direct connection string only in the migration environment.
+- Use the SQLAlchemy Psycopg 3 URL form: `postgresql+psycopg://...` and retain Neon's TLS query parameters.
+- Use the pooled endpoint for normal API traffic; Alembic creates a short-lived connection to the direct endpoint.
+- URL-encode reserved characters in the database username/password before placing them in a connection URL.
 - Never commit a real connection string, password, or API secret.
 - Do not expose database credentials to the browser or place them in any `VITE_*` variable.
 
@@ -82,9 +84,11 @@ The current SQLAlchemy model layer is intended to remain database-portable. The 
 
 - React/Vite frontend: deployed on GitHub Pages.
 - FastAPI backend: scaffolded, not yet deployed.
-- SQLAlchemy models: four core tables defined.
-- Alembic: initial migration exists, but PostgreSQL execution has not yet been verified.
-- Neon project/database: selected by the user, provisioning and connection configuration are the next implementation tasks.
+- SQLAlchemy models: four core tables defined; boolean server defaults use portable SQLAlchemy expressions.
+- Runtime configuration: pooled URL (`WDL_DATABASE_URL`) and migration URL (`WDL_MIGRATION_DATABASE_URL`) are separated; production refuses to silently fall back to SQLite.
+- PostgreSQL driver: Psycopg 3 dependency added.
+- Alembic: initial migration uses PostgreSQL-compatible boolean defaults and the direct migration URL; execution against Neon has not yet been verified.
+- Neon project/database: selected by the user; password has been reset, and the user will configure the new URLs locally.
 - Cloud FastAPI hosting provider: not selected yet.
 
 ## 8. Planned extension points
