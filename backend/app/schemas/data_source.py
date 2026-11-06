@@ -65,6 +65,7 @@ class DataSourceBase(BaseModel):
     base_url: str = Field(min_length=1)
     description: str | None = None
     config_json: dict[str, Any] = Field(default_factory=dict)
+    is_active: bool = True
 
     @field_validator("name", mode="before")
     @classmethod
@@ -123,4 +124,3 @@ class DataSourceList(BaseModel):
     total: int
     limit: int
     offset: int
-}
