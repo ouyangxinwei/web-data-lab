@@ -25,5 +25,5 @@ class CollectionTask(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
 
-    source: Mapped["DataSource"] = relationship(back_populates="source", overlaps="source")
+    source: Mapped["DataSource"] = relationship(back_populates="tasks")
     runs: Mapped[list["CollectionRun"]] = relationship(back_populates="task", passive_deletes=True)
