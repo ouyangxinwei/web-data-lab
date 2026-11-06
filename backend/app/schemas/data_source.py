@@ -67,6 +67,9 @@ class DataSourceBase(BaseModel):
     config_json: dict[str, Any] = Field(default_factory=dict)
     is_active: bool = True
 
+    # Whether this data source is enabled.
+    is_active: bool = True
+
     @field_validator("name", mode="before")
     @classmethod
     def normalize_name(cls, value: Any) -> Any:
