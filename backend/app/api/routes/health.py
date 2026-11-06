@@ -11,7 +11,8 @@ def health_check():
     try:
         check_database()
     except Exception:
-        # Do not expose internal database paths or driver error details.
+        # Keep the existing response field contract while using HTTP 503
+        # so clients and deployment monitors can detect database unavailability.
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
@@ -22,7 +23,7 @@ def health_check():
         )
 
     return {
-        "status": "healthy",
-        "database": "healthy",
+        "status": "ok",
+        "database": "ok",
         "version": "0.1.0",
     }
