@@ -1,18 +1,32 @@
+"""Environment-backed application and database configuration."""
 import os
 from pathlib import Path
 
 from sqlalchemy.engine import make_url
 
-# The backend directory is the project root for local SQLite storage.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
+ENVIRONMENT = os.getenv("WDL_ENV", "development").strip().lower()
 
-# Allow deployments to place the database on a persistent mounted volume.
-DATA_DIR = Path(os.getenv("WDL_DATA_DIR", str(DEFAULT_DATA_DIR))).expanduser()
-DATABASE_URL = os.getenv(
-    "WDL_DATABASE_URL",
-    f"sqlite:///{(DATA_DIR / 'web_data_lab.db').as_posix()}",
+# Production must explicitly provide the managed PostgreSQL connection string.
+_configured_database_url = os.getenv("WDL_DATABASE_URL")
+if not _configured_database_url and ENVIRONMENT == "production":
+    raise RuntimeError("WDL_DATABASE_URL must be configured in production.")
+
+# SQLite remains a convenience for local development only.
+DATABASE_URL = _configured_database_url or (
+    f"sqlite:///{(Path(os.getenv('WDL_DATA_DIR', str(DEFAULT_DATA_DIR))).expanduser() / 'web_data_lab.db').as_posix()}"
 )
+
+# Alembic should use Neon's direct endpoint, not the pooled application endpoint.
+MIGRATION_DATABASE_URL = os.getenv("WDL_MIGRATION_DATABASE_URL")
+if not MIGRATION_DATABASE_URL:
+    if make_url(DATABASE_URL).get_backend_name() == "postgresql":
+        raise RuntimeError(
+            "WDL_MIGRATION_DATABASE_URL must be configured for PostgreSQL migrations."
+        )
+    MIGRATION_DATABASE_URL = DATABASE_URL
+
 
 def _ensure_sqlite_directory() -> None:
     """Create the parent directory for a file-backed SQLite database."""
