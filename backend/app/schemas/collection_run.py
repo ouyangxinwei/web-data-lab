@@ -1,4 +1,5 @@
 """Validation schemas for collection-run API requests and responses."""
+from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -47,12 +48,12 @@ class CollectionRunRead(BaseModel):
     id: int
     task_id: int
     status: RunStatus
-    started_at: Any | None
-    finished_at: Any | None
+    started_at: datetime | None
+    finished_at: datetime | None
     records_count: int
     error_message: str | None
     duration_ms: int | None
-    created_at: Any
+    created_at: datetime
 
 
 class CollectionRunList(BaseModel):
