@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.health import router as health_router
+from app.api.routes.records import router as records_router
 from app.api.routes.runs import router as runs_router
 from app.api.routes.sources import router as sources_router
 from app.api.routes.tasks import router as tasks_router
@@ -26,6 +27,7 @@ app.include_router(health_router, prefix="/api")
 app.include_router(sources_router, prefix="/api")
 app.include_router(tasks_router, prefix="/api")
 app.include_router(runs_router, prefix="/api")
+app.include_router(records_router, prefix="/api")
 
 
 @app.get("/")
