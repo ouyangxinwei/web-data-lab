@@ -1,24 +1,181 @@
+
 import { useEffect, useState } from 'react';
 import { getBackendHealth } from './services/api.js';
-const messages = {
- zh:{subtitle:'多来源数据采集学习与实验平台',overview:'项目概览',sources:'数据源',lab:'采集实验室',history:'执行历史',settings:'设置',welcome:'欢迎使用 Web Data Lab',intro:'在一个独立环境中学习 API 数据采集与 HTML 网页解析。',backend:'后端连接',checking:'检查中…',online:'连接正常',offline:'暂不可连接',phase:'当前阶段',phaseText:'Phase 1 · 基础架构',next:'下一步',nextText:'完成 API 采集器与首批公开数据源。',sourceCount:'数据源',runCount:'采集任务',successCount:'成功次数',empty:'尚无采集记录',theme:'外观',language:'语言',note:'当前为基础框架。后端需单独部署，GitHub Pages 仅托管前端。'},
- ja:{overview:'概要',sources:'データソース',lab:'スクレイパーラボ',history:'実行履歴',settings:'設定',welcome:'Web Data Lab へようこそ',intro:'API収集とHTML解析を独立した環境で学習・実験できます。',backend:'バックエンド接続',checking:'確認中…',online:'接続中',offline:'未接続',phaseText:'Phase 1 · 基盤構築',next:'次のステップ',nextText:'API収集機能と最初の公開データソースを実装します。',sourceCount:'データソース',runCount:'収集タスク',successCount:'成功回数',empty:'収集履歴はありません',theme:'外観',language:'言語',note:'現在は基盤画面です。バックエンドは別途デプロイし、GitHub Pagesはフロントエンドのみをホストします。'},
- en:{overview:'Overview',sources:'Data Sources',lab:'Scraper Lab',history:'Run History',settings:'Settings',welcome:'Welcome to Web Data Lab',intro:'Learn API collection and HTML parsing in an independent environment.',backend:'Backend connection',checking:'Checking…',online:'Connected',offline:'Not connected',phaseText:'Phase 1 · Foundation',next:'Next step',nextText:'Build API collectors and connect the first public data sources.',sourceCount:'Data sources',runCount:'Collection tasks',successCount:'Successful runs',empty:'No collection history yet',theme:'Appearance',language:'Language',note:'This is the foundation UI. The backend is deployed separately; GitHub Pages hosts the frontend only.'}
-};
-const navItems=[['overview','▦'],['sources','◈'],['lab','⌘'],['history','◷'],['settings','⚙']];
-export default function App(){
- const [language,setLanguage]=useState(()=>localStorage.getItem('wdl-language')||'zh');
- const [theme,setTheme]=useState(()=>localStorage.getItem('wdl-theme')||'dark');
- const [active,setActive]=useState('overview'); const [health,setHealth]=useState('checking'); const [healthDetail,setHealthDetail]=useState('');
- const t=messages[language]||messages.zh;
- useEffect(()=>{localStorage.setItem('wdl-language',language);document.documentElement.lang=language==='zh'?'zh-CN':language;},[language]);
- useEffect(()=>{localStorage.setItem('wdl-theme',theme);document.documentElement.dataset.theme=theme;},[theme]);
- async function refreshHealth(){setHealth('checking');try{const data=await getBackendHealth();setHealth(data.status==='ok'?'online':'offline');setHealthDetail(data.version?`v${data.version}`:'');}catch{setHealth('offline');setHealthDetail('Start the FastAPI service to connect');}}
- useEffect(()=>{refreshHealth();},[]);
- return <div className="app-shell"><aside className="sidebar"><div className="brand-mark">WD</div><div className="brand-copy"><strong>Web Data Lab</strong><span>DATA COLLECTION WORKSPACE</span></div><nav className="main-nav" aria-label="Main navigation">{navItems.map(([key,symbol])=><button key={key} className={active===key?'nav-item active':'nav-item'} onClick={()=>setActive(key)}><span className="nav-symbol">{symbol}</span><span>{t[key]}</span></button>)}</nav><div className="sidebar-bottom"><span className="tiny-dot"/> <span>Personal Lab · v0.1.0</span></div></aside>
- <main className="main-area"><header className="topbar"><div className="breadcrumb">WORKSPACE <span>/</span> {t[active].toUpperCase()}</div><div className="toolbar"><label className="sr-only" htmlFor="language">{t.language}</label><select id="language" value={language} onChange={e=>setLanguage(e.target.value)}><option value="zh">简体中文</option><option value="ja">日本語</option><option value="en">English</option></select><button className="icon-button" onClick={()=>setTheme(theme==='dark'?'light':'dark')} title={t.theme} aria-label={t.theme}>{theme==='dark'?'☼':'☾'}</button></div></header>
- <section className="content"><div className="page-heading"><div><div className="eyebrow">YOUR DATA WORKBENCH</div><h1>{t.welcome}</h1><p>{t.intro}</p></div></div>
- <div className="status-banner"><div className="status-left"><span className={health==='online'?'status-indicator online':'status-indicator'}/><div><strong>{t.backend}</strong><span>{health==='checking'?t.checking:health==='online'?t.online:t.offline}{healthDetail?` · ${healthDetail}`:''}</span></div></div><button className="text-button" onClick={refreshHealth}>↻ {language==='zh'?'重新检查':language==='ja'?'再確認':'Retry'}</button></div>
- <div className="section-title"><h2>{t.overview}</h2><span>PHASE 01</span></div><div className="metric-grid"><article className="metric-card"><span>{t.sourceCount}</span><strong>0</strong><small>—</small></article><article className="metric-card"><span>{t.runCount}</span><strong>0</strong><small>—</small></article><article className="metric-card"><span>{t.successCount}</span><strong>0</strong><small>—</small></article></div>
- <div className="panel-grid"><section className="panel"><div className="panel-kicker">IN PROGRESS</div><h3>{t.phaseText}</h3><p>{t.note}</p><div className="progress-track"><span/></div><div className="progress-caption"><span>Foundation setup</span><span>Phase 1 / 5</span></div></section><section className="panel"><div className="panel-kicker">{t.next}</div><h3>{t.nextText}</h3><div className="empty-state"><span>⌁</span><p>{t.empty}</p></div></section></div><footer>WEB DATA LAB <span>·</span> LEARN · COLLECT · UNDERSTAND</footer></section></main></div>;
+import { messages } from './i18n/messages.js';
+
+import Overview from './pages/Overview.jsx';
+import Sources from './pages/Sources.jsx';
+import Tasks from './pages/Tasks.jsx';
+import Lab from './pages/Lab.jsx';
+import History from './pages/History.jsx';
+import Records from './pages/Records.jsx';
+import Settings from './pages/Settings.jsx';
+
+const navItems = [
+  { key: 'overview', symbol: '⌂', Component: Overview },
+  { key: 'sources', symbol: '▤', Component: Sources },
+  { key: 'tasks', symbol: '▦', Component: Tasks },
+  { key: 'lab', symbol: '⌘', Component: Lab },
+  { key: 'history', symbol: '◷', Component: History },
+  { key: 'records', symbol: '▧', Component: Records },
+  { key: 'settings', symbol: '⚙', Component: Settings },
+];
+
+export default function App() {
+  const [language, setLanguage] = useState(
+    () => localStorage.getItem('wdl-language') || 'zh'
+  );
+
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem('wdl-theme') || 'dark'
+  );
+
+  const [active, setActive] = useState('overview');
+  const [health, setHealth] = useState('checking');
+  const [healthDetail, setHealthDetail] = useState('');
+
+  const t = messages[language] || messages.zh;
+
+  const activePage = navItems.find((item) => item.key === active);
+  const ActivePage = activePage?.Component || Overview;
+
+  // Persist language and update the document language.
+  useEffect(() => {
+    localStorage.setItem('wdl-language', language);
+    document.documentElement.lang =
+      language === 'zh' ? 'zh-CN' : language;
+  }, [language]);
+
+  // Persist the selected theme.
+  useEffect(() => {
+    localStorage.setItem('wdl-theme', theme);
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  // Check backend availability.
+  async function refreshHealth() {
+    setHealth('checking');
+
+    try {
+      const data = await getBackendHealth();
+
+      setHealth(data.status === 'ok' ? 'online' : 'offline');
+      setHealthDetail(data.version ? `v${data.version}` : '');
+    } catch {
+      setHealth('offline');
+      setHealthDetail('Start the FastAPI service to connect');
+    }
+  }
+
+  useEffect(() => {
+    refreshHealth();
+  }, []);
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand-mark">WD</div>
+
+        <div className="brand-copy">
+          <strong>Web Data Lab</strong>
+          <span>DATA COLLECTION WORKSPACE</span>
+        </div>
+
+        <nav className="main-nav" aria-label="Main navigation">
+          {navItems.map(({ key, symbol }) => (
+            <button
+              key={key}
+              className={active === key ? 'nav-item active' : 'nav-item'}
+              onClick={() => setActive(key)}
+            >
+              <span className="nav-symbol">{symbol}</span>
+              <span>{t[key]}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="sidebar-bottom">
+          <span className="tiny-dot" />
+          <span>Personal Lab · v0.1.0</span>
+        </div>
+      </aside>
+
+      <main className="main-area">
+        <header className="topbar">
+          <div className="breadcrumb">
+            WORKSPACE <span>/</span> {t[active].toUpperCase()}
+          </div>
+
+          <div className="toolbar">
+            <label className="sr-only" htmlFor="language">
+              {t.language}
+            </label>
+
+            <select
+              id="language"
+              value={language}
+              onChange={(event) => setLanguage(event.target.value)}
+            >
+              <option value="zh">简体中文</option>
+              <option value="ja">日本語</option>
+              <option value="en">English</option>
+            </select>
+
+            <button
+              className="icon-button"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              title={t.theme}
+              aria-label={t.theme}
+            >
+              {theme === 'dark' ? '☼' : '☾'}
+            </button>
+          </div>
+        </header>
+
+        <section className="content">
+          {active === 'overview' && (
+            <>
+              <div className="page-heading">
+                <div>
+                  <div className="eyebrow">YOUR DATA WORKBENCH</div>
+                  <h1>{t.welcome}</h1>
+                  <p>{t.intro}</p>
+                </div>
+              </div>
+
+              <div className="status-banner">
+                <div className="status-left">
+                  <span
+                    className={
+                      health === 'online'
+                        ? 'status-indicator online'
+                        : 'status-indicator'
+                    }
+                  />
+
+                  <div>
+                    <strong>{t.backend}</strong>
+                    <span>
+                      {health === 'checking'
+                        ? t.checking
+                        : health === 'online'
+                          ? t.online
+                          : t.offline}
+                      {healthDetail ? ` · ${healthDetail}` : ''}
+                    </span>
+                  </div>
+                </div>
+
+                <button className="text-button" onClick={refreshHealth}>
+                  ↻ {t.refresh}
+                </button>
+              </div>
+            </>
+          )}
+
+          <ActivePage t={t} />
+        </section>
+      </main>
+    </div>
+  );
 }
